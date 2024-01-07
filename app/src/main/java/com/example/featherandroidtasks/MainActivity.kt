@@ -1,87 +1,77 @@
 package com.example.featherandroidtasks
 
-import android.Manifest
 import android.media.MediaMetadataRetriever
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
-import com.example.featherandroidtasks.ui.theme.FeatherAndroidTasksTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 
-@OptIn(ExperimentalPermissionsApi::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val context = LocalContext.current
 
-            var isPermissionDenied by remember { mutableStateOf(false) }
-            val permissionState =
-                rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE,) { permissionResult ->
-                    if (!permissionResult) {
-                        isPermissionDenied = true
-                    }
-                }
+            val mediaList = getMediaList()
 
-            LaunchedEffect(permissionState) {
-                permissionState.launchPermissionRequest()
-            }
+//            var isPermissionDenied by remember { mutableStateOf(false) }
+//            val permissionState =
+//                rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE,) { permissionResult ->
+//                    if (!permissionResult) {
+//                        isPermissionDenied = true
+//                    }
+//                }
+//
+//            LaunchedEffect(permissionState) {
+//                permissionState.launchPermissionRequest()
+//            }
 
-            FeatherAndroidTasksTheme {
-                if (permissionState.status.isGranted) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        val mediaList = getMediaList()
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp)
-                        ) {
-                            items(mediaList) { mediaItem ->
-                                MediaItemCard(mediaItem = mediaItem)
-                            }
-                        }
-                    }
-                } else {
-                    Box(modifier = Modifier.background(Color.Blue))
-                }
-            }
+//            FeatherAndroidTasksTheme {
+//                if (permissionState.status.isGranted) {
+//                    Surface(
+//                        modifier = Modifier.fillMaxSize(),
+//                        color = MaterialTheme.colorScheme.background
+//                    ) {
+//                        LazyColumn(
+//                            modifier = Modifier.fillMaxSize(),
+//                            contentPadding = PaddingValues(16.dp)
+//                        ) {
+//                            items(mediaList) { mediaItem ->
+//                                MediaItemCard(mediaItem = mediaItem)
+//                            }
+//                        }
+//                    }
+//                } else {
+//                    Box(modifier = Modifier.background(Color.Blue))
+//                }
+//            }
+            PhotosGrid(photos = mediaList)
         }
     }
 
@@ -114,7 +104,7 @@ class MainActivity : ComponentActivity() {
 
             // Iterate through the cursor and add each image to the list
             while (cursor.moveToNext()) {
-                val id = cursor.getLong(idColumn)
+                val id = cursor.getInt(idColumn)
                 val displayName = cursor.getString(displayNameColumn)
                 val dateAdded = cursor.getLong(dateAddedColumn)
                 val data = cursor.getString(dataColumn)
@@ -142,7 +132,7 @@ class MainActivity : ComponentActivity() {
 
             // Iterate through the cursor and add each video to the list
             while (cursor.moveToNext()) {
-                val id = cursor.getLong(idColumn)
+                val id = cursor.getInt(idColumn)
                 val displayName = cursor.getString(displayNameColumn)
                 val dateAdded = cursor.getLong(dateAddedColumn)
                 val data = cursor.getString(dataColumn)
@@ -229,27 +219,32 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun VideoPlayer(videoUri: String) {
+fun VideoPlayer(videoUri: String) {
     val uri = videoUri.toUri()
 
-    // Use VideoView to play the video
-    AndroidView(
-        factory = { context ->
-            VideoView(context).apply {
-                setVideoURI(uri)
-                start()
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .padding(8.dp)
-    )
+    Box {
+        AndroidView(
+            factory = { context ->
+                VideoView(context).apply {
+                    setVideoURI(uri)
+                    start()
+                }
+            },
+            modifier = Modifier
+                .padding(8.dp).fillMaxSize()
+        )
+        Icon(
+            imageVector = Icons.Default.PlayArrow,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
 }
 
 // Data class to represent a media item
 data class MediaItem(
-    val id: Long,
+    val id: Int,
     val displayName: String,
     val dateAdded: Long,
     val data: String,
